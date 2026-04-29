@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://virtuewisdom.com');
+  const allowedOrigins = ['https://virtuewisdom.com', 'http://localhost:4173', 'http://localhost:5173']; const requestOrigin = req.headers.origin; if (allowedOrigins.includes(requestOrigin)) res.setHeader('Access-Control-Allow-Origin', requestOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
