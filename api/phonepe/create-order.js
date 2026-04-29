@@ -1,11 +1,14 @@
 const crypto = require('crypto');
-
+const { createClient } = require('@supabase/supabase-js');
 // In-memory token cache (lasts for the lifetime of the function instance)
 let tokenCache = {
   token: null,
   expiresAt: 0
 };
-
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 const PHONEPE_BASE_URL = process.env.PHONEPE_ENV === 'PRODUCTION'
   ? 'https://api.phonepe.com/apis/pg'
   : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
@@ -73,7 +76,23 @@ module.exports = async (req, res) => {
     const merchantOrderId = 'VW' + Date.now() + crypto.randomBytes(4).toString('hex').toUpperCase();
 
     const token = await getAccessToken();
+const { error: insertError } = await supabase
+      .from('orders')
+      .insert({
+        email: email,
+        amount_paid: amount,
+        currency: 'INR',
+        merchant_order_id: merchantOrderId,
+        coupon_code: coupon_code || null,
+        status: 'pending',
+        unlocked: false,
+        metadata: { source: 'create-order' }
+      });
 
+    if (insertError) {
+      console.error('Failed to save order:', insertError);
+      return res.status(500).json({ error: 'Failed to save order' });
+    }
     const orderPayload = {
       merchantOrderId: merchantOrderId,
       amount: amount,
